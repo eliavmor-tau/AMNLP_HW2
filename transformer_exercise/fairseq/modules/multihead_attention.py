@@ -383,10 +383,17 @@ class MultiheadAttention(nn.Module):
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn = self.out_proj(attn)
-        print("mask_head", self.mask_head)
-        print("head dim", self.head_dim)
-        print("num heads", self.num_heads)
+        attn_size = attn.size()
+        attn = attn.view(
+            bsz, self.num_heads, tgt_len, src_len
+        ).transpose(1, 0)
         print("attn.size()", attn.size())
+        print("number of heads", self.num_heads)
+        print("mask_head", self.mask_head)
+        print("head_mask", self.head_mask)
+        print("*"*20)
+        attn = attn.view(attn_size)
+
         attn_weights: Optional[Tensor] = None
         if need_weights:
             attn_weights = attn_weights_float.view(
