@@ -87,7 +87,7 @@ class TransformerEncoderLayer(nn.Module):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
-            mask_head=self.mask_head if self.idx == self.mask_layer else -1
+            mask_head=self.mask_head
         )
 
     def residual_connection(self, x, residual):
