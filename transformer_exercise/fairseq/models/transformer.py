@@ -408,8 +408,7 @@ class TransformerEncoder(FairseqEncoder):
         else:
             self.layers = nn.ModuleList([])
         self.layers.extend(
-            [
-                self.build_encoder_layer(args, self.mask_head \
+            [ self.build_encoder_layer(args, self.mask_head \
                         if self.mask_layer_type == 'enc-enc' and self.mask_layer == i else -1)\
                         for i in range(args.encoder_layers)]
         )
