@@ -54,10 +54,6 @@ class MultiheadAttention(nn.Module):
         )
 
         self.head_dim = embed_dim // num_heads
-        self.head_mask = torch.ones(num_heads)
-
-        if 0 <= self.mask_head < num_heads:
-            self.head_mask[self.mask_head] = 0
         assert (
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
@@ -365,7 +361,6 @@ class MultiheadAttention(nn.Module):
                 attn_weights = attn_weights.transpose(0, 2)
             attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
 
-        print("attn_weights.size", attn_weights.size())
         if before_softmax:
             return attn_weights, v
 
@@ -374,7 +369,6 @@ class MultiheadAttention(nn.Module):
         )
         attn_weights = attn_weights_float.type_as(attn_weights)
         attn_probs = self.dropout_module(attn_weights)
-        print("attn_probs.size", attn_probs.size())
         assert v is not None
         attn = torch.bmm(attn_probs, v)
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
@@ -384,15 +378,13 @@ class MultiheadAttention(nn.Module):
             attn = attn.contiguous().view(tgt_len, bsz, embed_dim)
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
-        attn_size = attn.size()
+
         if 0 <= self.mask_head < self.num_heads:
+            attn_size = attn.size()
             attn = attn.view((bsz, self.num_heads, tgt_len, self.head_dim))
             attn[:, self.mask_head, :, :] *= 0
             attn = attn.view(attn_size)
-        print("number of heads", self.num_heads)
-        print("mask_head", self.mask_head)
-        print("head_mask", self.head_mask)
-        print("*" * 20)
+
         attn = self.out_proj(attn)
         attn_weights: Optional[Tensor] = None
         if need_weights:

@@ -538,7 +538,6 @@ class TransformerEncoder(FairseqEncoder):
 
         # encoder layers
         for idx, layer in enumerate(self.layers):
-            print(f"encoder layer {idx}")
             x = layer(
                 x, encoder_padding_mask=encoder_padding_mask if has_pads else None
             )
@@ -948,7 +947,6 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
         for idx, layer in enumerate(self.layers):
-            print(f"decoder layer {idx}")
             if incremental_state is None and not full_context_alignment:
                 self_attn_mask = self.buffered_future_mask(x)
             else:
