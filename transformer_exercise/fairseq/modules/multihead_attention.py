@@ -387,6 +387,7 @@ class MultiheadAttention(nn.Module):
         #     bsz, self.num_heads, tgt_len, src_len
         # ).transpose(1, 0)
         print("bsz", bsz)
+        print("attn_mask" ,attn_mask)
         print("attn.size()", attn.size())
         print("number of heads", self.num_heads)
         print("mask_head", self.mask_head)
