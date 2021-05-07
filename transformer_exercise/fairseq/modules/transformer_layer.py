@@ -263,7 +263,7 @@ class TransformerDecoderLayer(nn.Module):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
-            mask_head=self.mask_head
+            mask_head=self.mask_head if args.mask_layer_type == 'dec-dec' else -1
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -276,7 +276,7 @@ class TransformerDecoderLayer(nn.Module):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
-            mask_head=self.mask_head
+            mask_head=self.mask_head if args.mask_layer_type == 'enc-dec' else -1
 
         )
 
