@@ -374,8 +374,6 @@ class MultiheadAttention(nn.Module):
         attn_weights = attn_weights_float.type_as(attn_weights)
         attn_probs = self.dropout_module(attn_weights)
         print("attn_probs.size", attn_probs.size())
-        print("v.size", v.size())
-        print("v", v)
         assert v is not None
         attn = torch.bmm(attn_probs, v)
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
@@ -386,6 +384,8 @@ class MultiheadAttention(nn.Module):
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn_size = attn.size()
+        attn_temp = attn.view((bsz, self.num_heads, 1, self.head_dim))
+        print("attn_temp.size", attn_temp.size())
         # attn = attn.view(
         #     bsz, self.num_heads, tgt_len, src_len
         # ).transpose(1, 0)
