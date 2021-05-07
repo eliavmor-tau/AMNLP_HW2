@@ -384,9 +384,9 @@ class MultiheadAttention(nn.Module):
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn = self.out_proj(attn)
         attn_size = attn.size()
-        attn = attn.view(
-            bsz, self.num_heads, tgt_len, src_len
-        ).transpose(1, 0)
+        # attn = attn.view(
+        #     bsz, self.num_heads, tgt_len, src_len
+        # ).transpose(1, 0)
         print("attn.size()", attn.size())
         print("number of heads", self.num_heads)
         print("mask_head", self.mask_head)
