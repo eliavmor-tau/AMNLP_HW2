@@ -83,7 +83,7 @@ class MultiheadAttention(nn.Module):
         self.out_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
-        print(self.out_proj.get_device())
+
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
             self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
@@ -385,9 +385,10 @@ class MultiheadAttention(nn.Module):
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn_size = attn.size()
-        attn = attn.view((bsz, self.num_heads, tgt_len, self.head_dim))
-        attn = attn * self.head_mask.view((1, self.num_heads, 1, 1))
-        attn = attn.view(attn_size)
+        if 0 <= self.mask_head < self.num_heads:
+            attn = attn.view((bsz, self.num_heads, tgt_len, self.head_dim))
+            attn[:, self.mask_head, :, :] *= 0
+            attn = attn.view(attn_size)
         print("number of heads", self.num_heads)
         print("mask_head", self.mask_head)
         print("head_mask", self.head_mask)
