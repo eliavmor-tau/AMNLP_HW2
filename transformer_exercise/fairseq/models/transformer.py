@@ -408,8 +408,8 @@ class TransformerEncoder(FairseqEncoder):
         else:
             self.layers = nn.ModuleList([])
         self.layers.extend(
-            [ self.build_encoder_layer(args, self.mask_head \
-                        if self.mask_layer_type == 'enc-enc' and self.mask_layer == i else -1)\
+            [ self.build_encoder_layer(args, args.mask_head \
+                        if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1)\
                         for i in range(args.encoder_layers)]
         )
         self.num_layers = len(self.layers)
@@ -728,8 +728,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             self.layers = nn.ModuleList([])
         self.layers.extend(
             [
-                self.build_decoder_layer(args, no_encoder_attn, self.mask_head \
-                    if self.mask_layer_type in ['enc-dec', 'dec-dec'] and self.mask_layer == i else -1)
+                self.build_decoder_layer(args, no_encoder_attn, args.mask_head \
+                    if args.mask_layer_type in ['enc-dec', 'dec-dec'] and args.mask_layer == i else -1)
                     for i in range(args.decoder_layers)
             ]
         )
