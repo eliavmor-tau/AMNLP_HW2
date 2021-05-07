@@ -55,6 +55,7 @@ class MultiheadAttention(nn.Module):
 
         self.head_dim = embed_dim // num_heads
         self.head_mask = torch.ones(num_heads)
+
         if 0 <= self.mask_head < num_heads:
             self.head_mask[self.mask_head] = 0
         assert (
@@ -82,7 +83,7 @@ class MultiheadAttention(nn.Module):
         self.out_proj = quant_noise(
             nn.Linear(embed_dim, embed_dim, bias=bias), q_noise, qn_block_size
         )
-
+        print(self.out_proj.device)
         if add_bias_kv:
             self.bias_k = Parameter(torch.Tensor(1, 1, embed_dim))
             self.bias_v = Parameter(torch.Tensor(1, 1, embed_dim))
