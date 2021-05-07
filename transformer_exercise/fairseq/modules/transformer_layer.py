@@ -29,8 +29,11 @@ class TransformerEncoderLayer(nn.Module):
         args (argparse.Namespace): parsed command-line arguments
     """
 
-    def __init__(self, args):
+    def __init__(self, args, mask_head=-1):
         super().__init__()
+        # Expand layer attributes
+        self.mask_head = mask_head
+
         self.args = args
         self.embed_dim = args.encoder_embed_dim
         self.quant_noise = getattr(args, 'quant_noise_pq', 0)
@@ -84,6 +87,7 @@ class TransformerEncoderLayer(nn.Module):
             self_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            mask_head=self.mask_head if self.idx == self.mask_layer else -1
         )
 
     def residual_connection(self, x, residual):
@@ -174,9 +178,12 @@ class TransformerDecoderLayer(nn.Module):
     """
 
     def __init__(
-        self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
+        self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False, mask_head=-1
     ):
         super().__init__()
+        # Expand attributes.
+        self.mask_head = mask_head
+
         self.embed_dim = args.decoder_embed_dim
         self.dropout_module = FairseqDropout(
             args.dropout, module_name=self.__class__.__name__
@@ -256,6 +263,7 @@ class TransformerDecoderLayer(nn.Module):
             self_attention=not getattr(args, "cross_self_attention", False),
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            mask_head=self.mask_head if self.idx == self.mask_layer else -1
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -268,6 +276,8 @@ class TransformerDecoderLayer(nn.Module):
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
+            mask_head=self.mask_head if self.idx == self.mask_layer else -1
+
         )
 
     def prepare_for_onnx_export_(self):

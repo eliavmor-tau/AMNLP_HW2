@@ -332,6 +332,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
             src_lengths=src_lengths,
             return_all_hiddens=return_all_hiddens,
         )
+        exit(0)
         return decoder_out
 
     # Since get_normalized_probs is in the Fairseq Model which is not scriptable,
@@ -361,9 +362,6 @@ class TransformerEncoder(FairseqEncoder):
 
     def __init__(self, args, dictionary, embed_tokens):
         self.args = args
-        print("TransformerEncoder args!")
-        print(self.args)
-        exit(0)
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
 
@@ -410,7 +408,10 @@ class TransformerEncoder(FairseqEncoder):
         else:
             self.layers = nn.ModuleList([])
         self.layers.extend(
-            [self.build_encoder_layer(args) for i in range(args.encoder_layers)]
+            [
+                self.build_encoder_layer(args, self.mask_head \
+                        if self.mask_layer_type == 'enc-enc' and self.mask_layer == i else -1)\
+                        for i in range(args.encoder_layers)]
         )
         self.num_layers = len(self.layers)
 
@@ -419,8 +420,8 @@ class TransformerEncoder(FairseqEncoder):
         else:
             self.layer_norm = None
 
-    def build_encoder_layer(self, args):
-        layer = TransformerEncoderLayer(args)
+    def build_encoder_layer(self, args, mask_head):
+        layer = TransformerEncoderLayer(args, mask_head)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
@@ -728,8 +729,9 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             self.layers = nn.ModuleList([])
         self.layers.extend(
             [
-                self.build_decoder_layer(args, no_encoder_attn)
-                for _ in range(args.decoder_layers)
+                self.build_decoder_layer(args, no_encoder_attn, self.mask_head \
+                    if self.mask_layer_type in ['enc-dec', 'dec-dec'] and self.mask_layer == i else -1)
+                    for i in range(args.decoder_layers)
             ]
         )
         self.num_layers = len(self.layers)
@@ -782,8 +784,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             self.layers.insert(((i+1) * args.decoder_layers) // (num_base_layers + 1), BaseLayer(args))
 
 
-    def build_decoder_layer(self, args, no_encoder_attn=False):
-        layer = TransformerDecoderLayer(args, no_encoder_attn)
+    def build_decoder_layer(self, args, no_encoder_attn=False, mask_head=-1):
+        layer = TransformerDecoderLayer(args, no_encoder_attn, mask_head=mask_head)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)

@@ -37,8 +37,12 @@ class MultiheadAttention(nn.Module):
         encoder_decoder_attention=False,
         q_noise=0.0,
         qn_block_size=8,
+        mask_head=-1
     ):
         super().__init__()
+        # Expand attributes
+        self.mask_head = mask_head
+
         self.embed_dim = embed_dim
         self.kdim = kdim if kdim is not None else embed_dim
         self.vdim = vdim if vdim is not None else embed_dim
@@ -50,6 +54,9 @@ class MultiheadAttention(nn.Module):
         )
 
         self.head_dim = embed_dim // num_heads
+        self.head_mask = torch.ones(num_heads)
+        if 0 <= self.mask_head < num_heads:
+            self.head_mask[self.mask_head] = 0
         assert (
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
@@ -376,6 +383,10 @@ class MultiheadAttention(nn.Module):
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn = self.out_proj(attn)
+        print("mask_head", self.mask_head)
+        print("head dim", self.head_dim)
+        print("num heads", self.num_heads)
+        print("attn.size()", attn.size())
         attn_weights: Optional[Tensor] = None
         if need_weights:
             attn_weights = attn_weights_float.view(
