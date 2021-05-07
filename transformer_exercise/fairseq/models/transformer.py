@@ -111,10 +111,6 @@ class TransformerModel(FairseqEncoderDecoderModel):
         self.mask_layer_type = args.mask_layer_type
         self.mask_layer = args.mask_layer
         self.mask_head = args.mask_head
-        if self.mask_layer_type in ['enc-enc', 'enc-dec', 'dec-dec']:
-            print("good job")
-        exit(0)
-        
 
     @staticmethod
     def add_args(parser):
@@ -365,6 +361,9 @@ class TransformerEncoder(FairseqEncoder):
 
     def __init__(self, args, dictionary, embed_tokens):
         self.args = args
+        print("TransformerEncoder args!")
+        print(self.args)
+        exit(0)
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
 
