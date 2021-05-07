@@ -384,16 +384,8 @@ class MultiheadAttention(nn.Module):
         else:
             attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn_size = attn.size()
-        attn_temp = attn.view((bsz, self.num_heads, tgt_len, self.head_dim))
-        print("attn_temp.size", attn_temp.size())
-        print("tgt_len", tgt_len)
-        print("embed_dim", embed_dim)
-        # attn = attn.view(
-        #     bsz, self.num_heads, tgt_len, src_len
-        # ).transpose(1, 0)
-        print("bsz", bsz)
-        print("attn_mask", attn_mask)
-        print("attn.size()", attn.size())
+        attn = attn.view((bsz, self.num_heads, tgt_len, self.head_dim))
+        attn = torch.mul(attn, self.mask_head.view((1, self.num_heads, 1, 1)))
         print("number of heads", self.num_heads)
         print("mask_head", self.mask_head)
         print("head_mask", self.head_mask)
