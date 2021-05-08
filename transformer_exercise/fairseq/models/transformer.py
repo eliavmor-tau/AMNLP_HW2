@@ -420,8 +420,10 @@ class TransformerEncoder(FairseqEncoder):
             self.layers = nn.ModuleList([])
 
         if self.layer_configuration:
+            print("self.layer_configuration", self.layer_configuration)
             layers = []
             for i, layer_type in enumerate(self.layer_configuration):
+                print(f"Layer {i} type={layer_type} mask_head={args.mask_head if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1}")
                 self.build_encoder_layer(args, mask_head=args.mask_head \
                                         if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1,
                                         attention_on=layer_type == ATTENTION, forward_on= layer_type == FORWARD
