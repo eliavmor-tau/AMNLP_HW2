@@ -35,7 +35,8 @@ from torch import Tensor
 
 DEFAULT_MAX_SOURCE_POSITIONS = 1024
 DEFAULT_MAX_TARGET_POSITIONS = 1024
-
+ATTENTION = "A"
+FORWARD = "F"
 
 DEFAULT_MIN_PARAMS_TO_WRAP = int(1e8)
 
@@ -111,9 +112,6 @@ class TransformerModel(FairseqEncoderDecoderModel):
         self.mask_layer_type = args.mask_layer_type
         self.mask_layer = args.mask_layer
         self.mask_head = args.mask_head
-        self.enc_layer_configuration = args.enc_layer_configuration
-        print(self.enc_layer_configuration)
-        exit(0)
 
     @staticmethod
     def add_args(parser):
@@ -364,6 +362,17 @@ class TransformerEncoder(FairseqEncoder):
 
     def __init__(self, args, dictionary, embed_tokens):
         self.args = args
+        self.layer_configuration = list(args.enc_layer_configuration)
+        if self.layer_configuration:
+            if len(self.layer_configuration) != 2 * args.encoder_layers:
+                print(f"Notice that args.enc_layer_configuration ({args.enc_layer_configuration}) defines {len(self.layer_configuration)} layers"
+                      f"and args.encoder_layers defines {args.encoder_layers} layers.\n"
+                      f"The Encoder is generated based on the args.enc_layer_configuration argument.")
+
+            if set(self.layer_configuration).intersection({ATTENTION, FORWARD}) != set(self.layer_configuration):
+                raise(Exception(f"args.enc_layer_configuration should contain only {ATTENTION}, {FORWARD} symbols.\n"
+                                f"Got args.enc_layer_configuration={args.enc_layer_configuration}"))
+
         super().__init__(dictionary)
         self.register_buffer("version", torch.Tensor([3]))
 
@@ -409,11 +418,23 @@ class TransformerEncoder(FairseqEncoder):
             self.layers = LayerDropModuleList(p=self.encoder_layerdrop)
         else:
             self.layers = nn.ModuleList([])
-        self.layers.extend(
-            [ self.build_encoder_layer(args, args.mask_head \
-                        if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1)\
-                        for i in range(args.encoder_layers)]
-        )
+
+        if self.layer_configuration:
+            layers = []
+            for i, layer_type in enumerate(self.layer_configuration):
+                self.build_encoder_layer(args, mask_head=args.mask_head \
+                                        if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1,
+                                        attention_on=layer_type == ATTENTION, forward_on=FORWARD
+                )
+            self.layers.extend(layers)
+        else:
+            self.layers.extend(
+                [self.build_encoder_layer(args, mask_head=args.mask_head \
+                        if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1) \
+                    for i in range(args.encoder_layers)
+                ]
+            )
+
         self.num_layers = len(self.layers)
 
         if args.encoder_normalize_before:
@@ -421,8 +442,8 @@ class TransformerEncoder(FairseqEncoder):
         else:
             self.layer_norm = None
 
-    def build_encoder_layer(self, args, mask_head):
-        layer = TransformerEncoderLayer(args, mask_head)
+    def build_encoder_layer(self, args, mask_head=-1, attention_on=True, forward_on=True):
+        layer = TransformerEncoderLayer(args, mask_head=mask_head, attention_on=attention_on, forward_on=forward_on)
         checkpoint = getattr(args, "checkpoint_activations", False)
         if checkpoint:
             offload_to_cpu = getattr(args, "offload_activations", False)
