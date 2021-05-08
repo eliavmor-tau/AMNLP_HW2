@@ -148,12 +148,12 @@ class TransformerEncoderLayer(nn.Module):
             )
             x = self.dropout_module(x)
             x = self.residual_connection(x, residual)
-            if not self.normalize_before:
-                x = self.self_attn_layer_norm(x)
+        if not self.normalize_before:
+            x = self.self_attn_layer_norm(x)
 
-            residual = x
-            if self.normalize_before:
-                x = self.final_layer_norm(x)
+        residual = x
+        if self.normalize_before:
+            x = self.final_layer_norm(x)
 
         # Start of Forward model 'F'
         if self.forward_on:
@@ -162,8 +162,8 @@ class TransformerEncoderLayer(nn.Module):
             x = self.fc2(x)
             x = self.dropout_module(x)
             x = self.residual_connection(x, residual)
-            if not self.normalize_before:
-                x = self.final_layer_norm(x)
+        if not self.normalize_before:
+            x = self.final_layer_norm(x)
         return x
 
 
