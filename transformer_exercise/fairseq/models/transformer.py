@@ -422,9 +422,10 @@ class TransformerEncoder(FairseqEncoder):
         if self.layer_configuration:
             layers = []
             for i, layer_type in enumerate(self.layer_configuration):
+                print(f"Encoder build layer {i} layer_type={layer_type} attention_on={layer_type == ATTENTION} forward_on={layer_type == FORWARD}")
                 self.build_encoder_layer(args, mask_head=args.mask_head \
                                         if args.mask_layer_type == 'enc-enc' and args.mask_layer == i else -1,
-                                        attention_on=layer_type == ATTENTION, forward_on=FORWARD
+                                        attention_on=layer_type == ATTENTION, forward_on= layer_type == FORWARD
                 )
             self.layers.extend(layers)
         else:
