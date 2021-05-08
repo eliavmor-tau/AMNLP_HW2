@@ -29,10 +29,12 @@ class TransformerEncoderLayer(nn.Module):
         args (argparse.Namespace): parsed command-line arguments
     """
 
-    def __init__(self, args, mask_head=-1):
+    def __init__(self, args, mask_head=-1, attention_on=True, forward_on=True):
         super().__init__()
         # Expand layer attributes
         self.mask_head = mask_head
+        self.attention_on = attention_on
+        self.forward_on = forward_on
 
         self.args = args
         self.embed_dim = args.encoder_embed_dim
@@ -132,31 +134,36 @@ class TransformerEncoderLayer(nn.Module):
             attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
 
         residual = x
-        if self.normalize_before:
-            x = self.self_attn_layer_norm(x)
-        x, _ = self.self_attn(
-            query=x,
-            key=x,
-            value=x,
-            key_padding_mask=encoder_padding_mask,
-            need_weights=False,
-            attn_mask=attn_mask,
-        )
-        x = self.dropout_module(x)
-        x = self.residual_connection(x, residual)
-        if not self.normalize_before:
-            x = self.self_attn_layer_norm(x)
+        # Start of Attention model 'A'
+        if self.attention_on:
+            if self.normalize_before:
+                x = self.self_attn_layer_norm(x)
+            x, _ = self.self_attn(
+                query=x,
+                key=x,
+                value=x,
+                key_padding_mask=encoder_padding_mask,
+                need_weights=False,
+                attn_mask=attn_mask,
+            )
+            x = self.dropout_module(x)
+            x = self.residual_connection(x, residual)
+            if not self.normalize_before:
+                x = self.self_attn_layer_norm(x)
 
-        residual = x
-        if self.normalize_before:
-            x = self.final_layer_norm(x)
-        x = self.activation_fn(self.fc1(x))
-        x = self.activation_dropout_module(x)
-        x = self.fc2(x)
-        x = self.dropout_module(x)
-        x = self.residual_connection(x, residual)
-        if not self.normalize_before:
-            x = self.final_layer_norm(x)
+            residual = x
+            if self.normalize_before:
+                x = self.final_layer_norm(x)
+
+        # Start of Forward model 'F'
+        if self.forward_on:
+            x = self.activation_fn(self.fc1(x))
+            x = self.activation_dropout_module(x)
+            x = self.fc2(x)
+            x = self.dropout_module(x)
+            x = self.residual_connection(x, residual)
+            if not self.normalize_before:
+                x = self.final_layer_norm(x)
         return x
 
 

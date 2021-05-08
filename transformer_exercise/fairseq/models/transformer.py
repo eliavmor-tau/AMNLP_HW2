@@ -111,6 +111,9 @@ class TransformerModel(FairseqEncoderDecoderModel):
         self.mask_layer_type = args.mask_layer_type
         self.mask_layer = args.mask_layer
         self.mask_head = args.mask_head
+        self.enc_layer_configuration = args.enc_layer_configuration
+        print(self.enc_layer_configuration)
+        exit(0)
 
     @staticmethod
     def add_args(parser):
